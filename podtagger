@@ -1,5 +1,18 @@
 #!/usr/bin/env ruby
+=begin
+PodTagger v1.0.0
+Copyright Brett Terpstra 2017 | MIT License
 
+# Podtagger: Automated podcast ID3 tagger
+
+<http://brettterpstra.com/projects/podtagger>
+
+Podtagger is a ruby script that reads a `shownotes.raw` (Markdown with YAML headers) file and applies the information in the headers using configured templates to a target MP3 file.
+
+### Requirements
+
+Podtagger requires [mid3v2](https://mutagen.readthedocs.io/en/latest/man/mid3v2.html) from the Python mutagen package. You can install it with [pip](https://pip.pypa.io/en/stable/). If you don't already have pip installed, use `sudo easy_install pip` before running `sudo pip install mutagen`.
+=end
 require 'yaml'
 require 'date'
 require 'fileutils'
