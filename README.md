@@ -4,7 +4,7 @@
 
 <http://brettterpstra.com/projects/podtagger>
 
-PodTagger is a ruby script that reads a `shownotes.raw` (Markdown with YAML headers) file and applies the information in the headers using configured templates to a target MP3 file.
+PodTagger is a simple ruby script that reads a `shownotes.raw` (Markdown with YAML headers) file and applies the information in the headers using configured templates to a target MP3 file.
 
 ### Requirements
 
