@@ -1,5 +1,7 @@
 # PodTagger: Automated ID3 tagging for podcasts
 
+<img style="float:right;margin:10px 0 10px;" src="https://github.com/ttscoff/podtagger/raw/master/podtagger.png">
+
 <http://brettterpstra.com/projects/podtagger>
 
 PodTagger is a ruby script that reads a `shownotes.raw` (Markdown with YAML headers) file and applies the information in the headers using configured templates to a target MP3 file.
