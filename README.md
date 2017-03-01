@@ -22,18 +22,24 @@ The podcast file contains the following keys:
 default:
   # Title of podcast
   podcast: PODCAST NAME
+  
   # Name of host(s)
   host: HOST NAME 
+  
   # Podcast network name, blank if not applicable
   network: NETWORK 
+  
   # Format for adding header to output show notes
   # Any meta key can be used within %% variables
   title_format: "%%title%% with %%guest%%" 
+  
   # Format for title added as ID3 tag
   # Any meta key can be used within %% variables
   ep_title_format: "%%title%% with %%guest%% - %%podcast%% %%episode%%"
+  
   # POSIX path to thumbnail image
   logo: PATH/TO/THUMBNAIL 
+
 ## Optionally add configs for podcast-specific keys
 # PODCAST NAME:
 #   ep_title_format: "%%title%% with %%guest%% - %%podcast%% %%episode%%"
