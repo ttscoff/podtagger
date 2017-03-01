@@ -1,0 +1,196 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'date'
+require 'fileutils'
+
+$debug = false
+
+$config_file = File.expand_path("~/podtagger.yaml")
+
+require 'pp' if $debug
+
+def die(msg)
+  $stderr.puts(msg)
+  Process.exit 1
+end
+
+def empty_config(podcast)
+  config =<<EOFILE
+default:
+  # Title of podcast
+  podcast: #{podcast rescue "PODCAST NAME"}
+
+  # Name of host(s)
+  host: HOST NAME
+
+  # Podcast network name, blank if not applicable
+  network: NETWORK
+
+  # Format for adding header to output show notes
+  # Any meta key can be used within %% variables
+  title_format: "%%title%% with %%guest%%"
+
+  # Format for title added as ID3 tag
+  # Any meta key can be used within %% variables
+  ep_title_format: "%%title%% with %%guest%% - %%podcast%% %%episode%%"
+
+  # POSIX path to thumbnail image
+  logo: PATH/TO/THUMBNAIL
+
+## Optionally add configs for podcast-specific keys
+# #{podcast rescue "PODCAST NAME"}:
+#   ep_title_format: "%%title%% with %%guest%% - %%podcast%% %%episode%%"
+#   title_format: "## %%title%% with %%guest%%"
+#   logo: PATH/TO/THUMBNAIL
+
+EOFILE
+  return config
+end
+
+def load_default(podcast=nil)
+  if File.exist?($config_file)
+    data = YAML.load(IO.read($config_file))
+    if data.has_key?('default')
+      default = data['default']
+      if podcast && data.has_key?(podcast)
+        default.merge!(data[podcast])
+        default['podcast'] = podcast
+      elsif default.has_key?('podcast')
+        default.merge!(data[default['podcast']])
+      end
+      return default
+    end
+  end
+  die("Missing default configuration in #{$config_file}")
+end
+
+def title_from_h1(input)
+  title = input.scan(/^\#{1,2} (.*)/)
+  unless title.empty?
+    $stderr.puts ("=> [Title taken from h1: #{title[0][0]}]\n\n") if $debug
+    input.sub!(/^\#{1,2} (.*)\n+/,'')
+    return [title[0][0],input]
+  else
+    die('No title specified (title)')
+  end
+end
+
+def string_from_template(defaults,template)
+  if defaults.has_key?(template)
+    defaults[template].gsub(/%%(.*?)%%/) {|match|
+      m = Regexp.last_match
+      if defaults.has_key?(m[1])
+        defaults[m[1]]
+      else
+        die(%Q{Missing value for key '%%#{m[1]}%%' in format string (#{template})})
+      end
+    }
+  else
+    die("No title format specified (#{template})")
+  end
+end
+
+
+if ARGV.length > 0 && File.exist?(ARGV[0])
+  file = ARGV[0]
+else
+  die "Usage: #{File.basename(__FILE__)} TARGET.mp3"
+end
+
+t = Time.now
+date = t.year
+notes_base = File.dirname(file)
+unless File.exist?(File.join(notes_base,"shownotes.raw"))
+  if File.exist?(File.join(notes_base,'shownotes.md'))
+    FileUtils.cp File.join(notes_base,'shownotes.md'), File.join(notes_base,'shownotes.raw')
+  else
+    die('No shownotes.raw file exists')
+  end
+end
+input = IO.read(File.join(notes_base,'shownotes.raw')).force_encoding('utf-8')
+
+begin
+  data = YAML.load(input)
+  show_notes = input.sub!(/---.*?---/m,'')
+  if data.has_key?('podcast')
+    defaults = load_default(data['podcast'])
+  else
+    defaults = load_default
+  end
+  defaults.merge!(data)
+rescue
+  die("Error reading YAML headers in shownotes.raw")
+end
+
+if $debug
+  $stdout.puts "* [Resolved YAML data]"
+  $stderr.puts "------------"
+  pp defaults
+  $stderr.puts "------------\n\n"
+end
+
+podcast = defaults['podcast']
+description = defaults['description'] || die('No description provided (description)')
+episode = defaults['episode'] || die('No episode number specified (episode)')
+if defaults.has_key?('title')
+  title = defaults['title']
+else
+  title, show_notes =  title_from_h1(show_notes)
+  defaults['title'] = title
+end
+logo = File.expand_path(defaults['logo']) || die('No logo specified (logo)')
+host = defaults['host'] || die('No host specified (host)')
+if !defaults.has_key?('network') || defaults['network'].empty?
+  network = host
+else
+  network = defaults['network']
+end
+
+ep_title = string_from_template(defaults,'ep_title_format')
+formatted_title = string_from_template(defaults,'title_format')
+
+args = {
+  'TDES' => %Q{"#{description}"},
+  'COMM' => %Q{"#{description}"},
+  'TALB' => %Q{"#{podcast}"},
+  'TCMP' => 1,
+  'TCON' => %Q{"Podcast"},
+  'TRCK' => %Q{"#{episode}"},
+  'APIC' => %Q{"#{logo}"},
+  'TPE1' => %Q{"#{network}"},
+  'TPE2' => %Q{"#{host}"},
+  'TIT2' => %Q{"#{ep_title}"},
+  'TDRC' => %Q{"#{date}"}
+}
+
+cmd = %Q{mid3v2 -D #{file} && mid3v2}
+
+args.each {|k,v|
+  cmd += %Q{ --#{k} #{v}}
+}
+
+cmd += %Q{ "#{file}"}
+if $debug
+  $stderr.puts "* [Command]"
+  $stderr.puts "------------"
+  $stderr.puts cmd
+  $stderr.puts "------------\n\n"
+end
+
+%x{#{cmd}}
+$stderr.puts "=> ID3 tags written to #{file}"
+
+if $debug
+  $stderr.puts "------------"
+  args.each {|k,v|
+    $stderr.printf "   %s: %s\n" % [k, v]
+  }
+  $stderr.puts "------------\n\n"
+end
+
+File.open(File.join(notes_base,'shownotes.md'),'w') {|f|
+  f.puts ("%s\n\n" % formatted_title)
+  f.puts (show_notes)
+  $stderr.puts %Q{Show notes for "#{ep_title}" written to shownotes.md}
+}
