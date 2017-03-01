@@ -1,6 +1,6 @@
 # PodTagger: Automated ID3 tagging for podcasts
 
-<img style="float:right;margin:10px 0 10px;" src="https://github.com/ttscoff/podtagger/raw/master/podtagger.png">
+![](https://github.com/ttscoff/podtagger/raw/master/podtagger.png)
 
 <http://brettterpstra.com/projects/podtagger>
 
@@ -80,7 +80,9 @@ The keys `ep_title_format` and `title_format` use variables delineated by 2 perc
 
 ### Show Notes
 
-PodTagger reads a YAML header from a file called `shownotes.raw` in the same directory as the mp3 file you're tagging.[^1] After PodTagger finishes, it will write out the show notes with the YAML removed to a file called `shownotes.md`. The rest of the file after the YAML headers can be any information you want. I use it for description, sponsor info, and show links, but it's for whatever you'd post on a show landing page.
+PodTagger reads a YAML header from a file called `shownotes.raw` in the same directory as the mp3 file you're tagging. If `shownotes.raw` doesn't exist but `shownotes.md` does, `shownotes.md` will be copied to .raw and then overwritten without the YAML headers. 
+
+After PodTagger finishes, it will write out the show notes with the YAML removed to a file called `shownotes.md`. The rest of the file after the YAML headers can be any information you want. I use it for description, sponsor info, and show links, but it's for whatever you'd post on a show landing page.
 
 The `shownotes.raw` file would look something like this:
 
@@ -98,5 +100,3 @@ This episode is sponsored by TextExpander for Teams, making all of your team's c
 ```
 
 Note that you can include a `title:` meta key, or just make an h1 or h2 (`# title` or `## title` line) in the show note body. Either will generate the title and format it based on format strings in the configuration.
-
-[^1]: If `shownotes.raw` doesn't exist but `shownotes.md` does, `shownotes.md` will be copied to .raw and then overwritten without the YAML headers.
