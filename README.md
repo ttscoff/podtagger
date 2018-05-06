@@ -4,7 +4,7 @@
 
 <http://brettterpstra.com/projects/podtagger>
 
-PodTagger is a simple ruby script that reads a `shownotes.raw` (Markdown with YAML headers) file and applies the information in the headers using configured templates to a target MP3 file.
+PodTagger is a simple ruby script that reads a `shownotes.raw.md` (Markdown with YAML headers) file and applies the information in the headers using configured templates to a target MP3 file.
 
 ### Requirements
 
@@ -76,15 +76,15 @@ Any of these values can be overridden by the YAML data in an episodes notes file
 
 #### Format strings
 
-The keys `ep_title_format` and `title_format` use variables delineated by 2 percent symbols on either side: `%%variable%%`. The variable name can correspond to any keys defined, such as `%%podcast%%` or `%%title%%`. You can also include custom keys in your `shownotes.raw` headers (see below) which are then available as variables. For example, my Systematic show notes include a key for `guest:`, which I can then use in the format string: `"## %%title%% with %%guest%%"`.
+The keys `ep_title_format` and `title_format` use variables delineated by 2 percent symbols on either side: `%%variable%%`. The variable name can correspond to any keys defined, such as `%%podcast%%` or `%%title%%`. You can also include custom keys in your `shownotes.raw.md` headers (see below) which are then available as variables. For example, my Systematic show notes include a key for `guest:`, which I can then use in the format string: `"## %%title%% with %%guest%%"`.
 
 ### Show Notes
 
-PodTagger reads a YAML header from a file called `shownotes.raw` in the same directory as the mp3 file you're tagging. If `shownotes.raw` doesn't exist but `shownotes.md` does, `shownotes.md` will be copied to .raw and then overwritten without the YAML headers. 
+PodTagger reads a YAML header from a file called `shownotes.raw.md` in the same directory as the mp3 file you're tagging. If `shownotes.raw.md` doesn't exist but `shownotes.md` does, `shownotes.md` will be copied to .raw.md and then overwritten without the YAML headers. 
 
 After PodTagger finishes, it will write out the show notes with the YAML removed to a file called `shownotes.md`. The rest of the file after the YAML headers can be any information you want. I use it for description, sponsor info, and show links, but it's for whatever you'd post on a show landing page.
 
-The `shownotes.raw` file would look something like this:
+The `shownotes.raw.md` file would look something like this:
 
 ```
 ---
@@ -100,3 +100,28 @@ This episode is sponsored by TextExpander for Teams, making all of your team's c
 ```
 
 Note that you can include a `title:` meta key, or just make an h1 or h2 (`# title` or `## title` line) in the show note body. Either will generate the title and format it based on format strings in the configuration.
+
+### Usage
+
+
+```
+Usage: podtagger [options] TARGET.mp3
+
+Options:
+    -d, --debug                      Show debug output
+    -v, --verbose                    Verbose output
+    -c, --config=CONFIG              Use alternate configuration file
+        --no-color                   Colorize output (default)
+        --html                       Output HTML status messages
+    -h, --help                       Display this screen
+```
+
+### Changelog
+
+#### 1.0.1
+
+- added command line options (debug, verbose, color, help)
+- added colorized output
+- added html output for use with Platypus
+- change default show notes file to `shownotes.raw.md`
+- moved config to `~/.config/podtagger/podtagger.yaml`
