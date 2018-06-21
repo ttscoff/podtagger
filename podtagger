@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 =begin
-PodTagger v1.0.1
+PodTagger v1.1.0
 Copyright Brett Terpstra 2017 | MIT License
 
 # Podtagger: Automated podcast ID3 tagger
@@ -12,6 +12,10 @@ Podtagger is a ruby script that reads a `shownotes.raw[.md]` (Markdown with YAML
 ### Requirements
 
 Podtagger requires [mid3v2](https://mutagen.readthedocs.io/en/latest/man/mid3v2.html) from the Python mutagen package. You can install it with [pip](https://pip.pypa.io/en/stable/). If you don't already have pip installed, use `sudo easy_install pip` before running `sudo pip install mutagen`.
+
+### Changelog
+
+1.1.0 Add title, filesize, and duration metadata to shownotes.md output
 =end
 require 'yaml'
 require 'date'
@@ -60,6 +64,7 @@ class PodTagger
         @debug = true
         @verbose = true
       end
+      @data = get_data
     else
       die("File #{file} does not exist.", 2)
     end
@@ -127,6 +132,9 @@ class PodTagger
     # POSIX path to thumbnail image
     logo: PATH/TO/THUMBNAIL
 
+    # Include episode length, filesize as HTML comment in show notes
+    include_metadata: false
+
   ## Optionally add configs for podcast-specific keys
   # #{podcast rescue "PODCAST NAME"}:
   #   ep_title_format: "%%title%% with %%guest%% - %%podcast%% %%episode%%"
@@ -188,6 +196,23 @@ EOFILE
     else
       die("No title format specified (#{template})",2)
     end
+  end
+
+  def get_data
+    raw = %x{mdls -raw -name kMDItemDurationSeconds "#{@file}"}.strip
+    s = ('%.0f' % raw).to_i
+    stamp = '%02d:%02d:%02d' % [s/60/60,s/60%60,s%60]
+    size = %x{mdls -raw -name kMDItemLogicalSize "#{@file}"}.strip
+    {:seconds=>s,:stamp=>stamp,:size=>size}
+  end
+
+  def format_data
+    out = ['<!-- Metadata']
+    out.push("Duration Seconds: #{@data[:seconds]}")
+    out.push("Duration: #{@data[:stamp]}")
+    out.push("Filesize: #{@data[:size]}")
+    out.push("-->\n")
+    out.join("\n")
   end
 
   def tagpod
@@ -302,6 +327,9 @@ EOFILE
     end
 
     File.open(File.join(@base_dir,'shownotes.md'),'w') do |f|
+      if defaults['include_metadata']
+        f.puts format_data
+      end
       f.puts ("%s\n\n" % formatted_title)
       f.puts (show_notes)
       output(%Q{Show notes for "#{ep_title}" written to shownotes.md},3)

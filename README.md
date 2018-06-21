@@ -118,6 +118,11 @@ Options:
 
 ### Changelog
 
+#### 1.1.0
+
+- Add metadata at top of shownotes for title, duration, and filesize
+- Various fixes and improvements
+
 #### 1.0.1
 
 - added command line options (debug, verbose, color, help)
